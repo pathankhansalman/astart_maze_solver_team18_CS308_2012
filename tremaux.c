@@ -5,8 +5,9 @@
 
 // Declaration of variables
 int is_at_end;
-int path[maze_length][maze_breadth][maze_length][maze_breadth];
-int parent_of[maze_length][maze_breadth];
+int path[maze_length][maze_width][maze_length][maze_width];
+int parent_of[maze_length][maze_width];
+int on_optimal_path[maze_length][maze_width];
 
 // Initialization of variables
 void init(){
@@ -161,7 +162,7 @@ void goto_parent_of(int arg1,int arg2){
 }
 
 // Go to one of the children at random
-void goto_child_of(int arg1,int arg2){// Return an integer in this function to depict which child is the bot going to
+int goto_child_of(int arg1,int arg2){// Return an integer in this function to depict which child is the bot going to
 	int current_x=arg1,current_y=arg2;
 	int child_x,child_y,no_of_paths;
 	int flag = 0,flagl = 0,flagr = 0,flags = 0,flagb = 0;
@@ -199,7 +200,7 @@ void goto_child_of(int arg1,int arg2){// Return an integer in this function to d
 	child_x = arg1;
 	child_y = arg2 - 1;
 	
-	if(child_y > 0 && parent_of[arg1][arg2]!=10*child_x + child_y && path[arg1][arg2][child_x][child_y]==2){
+	if(child_y > 0 && parent_of[arg1][arg2]!=10*child_x + child_y && path[arg1][arg2][child_x][child_y]!=2){
 		// turn back
 		// move forward
 		flag++;
@@ -208,12 +209,145 @@ void goto_child_of(int arg1,int arg2){// Return an integer in this function to d
 	
 	no_of_paths = flag;
 	random_path_number = rand(flag);
+	
+	if(random_path_number = 0){
+		if(flagl > 0){
+			// turn left
+			// move forward
+			return 0;
+		}
+		
+		else if(flags > 0){
+			// go forward
+			return 1;
+		}
+		
+		else if(flagr > 0){
+			// turn right
+			return 2;
+		}
+		
+		else if(flagb > 0){
+			// go backward
+			return 3;
+		}
+	}
+	
+	if(random_path_number = 1){
+		if(flags > 0){
+			// turn left
+			// move forward
+			return 1;
+		}
+		
+		else if(flagr > 0){
+			// go forward
+			return 2;
+		}
+		
+		else if(flagb > 0){
+			// turn right
+			return 3;
+		}
+		
+		else if(flagl > 0){
+			// go backward
+			return 0;
+		}
+	}
+	
+	if(random_path_number = 2){
+		if(flagr > 0){
+			// turn left
+			// move forward
+			return 2;
+		}
+		
+		else if(flagb > 0){
+			// go forward
+			return 3;
+		}
+		
+		else if(flagl > 0){
+			// turn right
+			return 0;
+		}
+		
+		else if(flags > 0){
+			// go backward
+			return 1;
+		}
+	}
+}
+
+// Get the coordinates of the child chosen by the random algorithm
+int successor_value(int arg1,int arg2,int arg3){
+	int rand = arg3;
+	int retval;
+	
+	if(rand == 0) retval = 10*(arg1+1) + arg2;
+	else if(rand == 1) retval = 10*(arg1-1) + arg2;
+	else if(rand == 2) retval = 10*arg1 + arg2 + 1;
+	else if(rand == 3) retval = 10*arg1 + arg2 + 1;
+	
+	return retval;
+}
+
+// Get the coordinates of the successor in the solution of the maze
+int correct_successor_value(int arg1,int arg2){
+	int child_x, child_y;
+	
+	child_x = arg1 + 1;
+	child_y = arg2;
+	
+	if(child_x < maze_length && path[arg1][arg2][child_x][child_y]==1) return 10*child_x + child_y;
+	
+	child_x = arg1 - 1;
+	child_y = arg2;
+	
+	if(child_x < maze_length && path[arg1][arg2][child_x][child_y]==1) return 10*child_x + child_y;
+	
+	child_x = arg1;
+	child_y = arg2 + 1;
+	
+	if(child_x < maze_length && path[arg1][arg2][child_x][child_y]==1) return 10*child_x + child_y;
+	
+	child_x = arg1;
+	child_y = arg2 - 1;
+	
+	if(child_x < maze_length && path[arg1][arg2][child_x][child_y]==1) return 10*child_x + child_y;
+}
+
+// Goes to the successor of the present node in the solution of the maze
+void goto_successor_of(int arg1,int arg2){
+	int child_x, child_y;
+	
+	child_x = arg1 + 1;
+	child_y = arg2;
+	
+	if(child_x < maze_length && path[arg1][arg2][child_x][child_y]==1) moveto(arg1,arg2,child_x,child_y);
+	
+	child_x = arg1 - 1;
+	child_y = arg2;
+	
+	if(child_x < maze_length && path[arg1][arg2][child_x][child_y]==1) moveto(arg1,arg2,child_x,child_y);
+	
+	child_x = arg1;
+	child_y = arg2 + 1;
+	
+	if(child_x < maze_length && path[arg1][arg2][child_x][child_y]==1) moveto(arg1,arg2,child_x,child_y);
+	
+	child_x = arg1;
+	child_y = arg2 - 1;
+	
+	if(child_x < maze_length && path[arg1][arg2][child_x][child_y]==1) moveto(arg1,arg2,child_x,child_y);
 }
 
 // Exploring the maze
 void tremaux_exploring(int arg1,int arg2){
 	int current_x=arg1,current_y=arg2;
 	int successor_x,successor_y,parent_x,parent_y;
+	int child_id;
 	is_at_end = 0;
 	init();
 	
@@ -228,12 +362,34 @@ void tremaux_exploring(int arg1,int arg2){
 		}
 		
 		else{
-			goto_child_of(current_x,current_y);
-			successor_x = successor_value(current_x,current_y)/10;
-			successor_y = successor_value(current_x,current_y)%10;
+			child_id = goto_child_of(current_x,current_y);
+			successor_x = successor_value(current_x,current_y,child_id)/10;
+			successor_y = successor_value(current_x,current_y,child_id)%10;
 			path[current_x][current_y][successor_x][successor_y]++;
 			tremaux_exploring(successor_x,successor_y);
 		}
 		
 	}
+}
+
+// Back-tracing maze
+void tremaux_solving(int arg1,int arg2){
+	int current_x=arg1,current_y=arg2;
+	int successor_x,successor_y;
+	
+	if(!(arg1==0 && arg2==0)){
+		goto_successor_of(arg1,arg2);
+		successor_x = correct_successor_value(current_x,current_y)/10;
+		successor_y = correct_successor_value(current_x,current_y)%10;
+		tremaux_solving(successor_x,successor_y);
+	}
+}
+
+// Main function
+int main(){
+	int i=0,j=0;
+	tremaux_exploring(i,j);
+	//_delay_ms(5000)
+	tremaux_solving(maze_length-1,maze_width-1);
+	return 0;
 }
